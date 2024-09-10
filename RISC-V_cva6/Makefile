@@ -127,7 +127,7 @@ FREERTOS_TCP_SRC = \
 	$(FREERTOS_TCP_SOURCE_DIR)/FreeRTOS_UDP_IPv4.c \
 	$(FREERTOS_TCP_SOURCE_DIR)/FreeRTOS_UDP_IPv6.c \
 	$(FREERTOS_TCP_SOURCE_DIR)/portable/BufferManagement/BufferAllocation_2.c \
-	test1.c
+	test.c
 
 AAA= $(FREERTOS_TCP_STUBS_SOURCE_DIR)/freertos_api.c
 
