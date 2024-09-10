@@ -45,6 +45,7 @@ _start:
 	// Primary hart
 	la sp, _stack_top
 
+
 	// Load data section
 	la a0, _data_lma
 	la a1, _data
@@ -68,6 +69,7 @@ _start:
 	bltu a0, a1, 1b
 2:
 
+
 	// argc, argv, envp is 0
 	li  a0, 0
 	li  a1, 0
@@ -76,6 +78,14 @@ _start:
     li t6, (3<<13) | (3 << 11) | (1 << 7)|  (1<<3)  // MPP=3(machine-mode) + MIE   
     //li t6, 0x0080   // MPP = machine mode/3 + MPIE + MIE   
     csrw mstatus, t6
+
+#if 0
+	li	a1, 0x10000000
+	li	a2, 0x62
+1:
+	sb	a2, 0(a1)
+	j 1b
+#endif
 	
     jal main
 1:

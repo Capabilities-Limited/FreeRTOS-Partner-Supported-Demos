@@ -60,7 +60,7 @@ void vSendString( const char * const pcString );
 #define LEDS (*((volatile unsigned int *) (LEDS_ADDR + 0x0)))
 static int LED_STATE = 0xf;
 
-uint8_t s_uart[12] = "init_uart\r\n";
+uint8_t s_uart[17] = "init_uart SHIP\r\n";
 
 /*-----------------------------------------------------------*/
 void LEDInit( void )
@@ -111,7 +111,7 @@ void flash_led()
 {   int loop = 5;
     for(int k = 0; k < loop; k++)
     {
-        for(int i = 0; i < 100000;)
+        for(int i = 0; i < 1000000;)
         {
           i++;
 

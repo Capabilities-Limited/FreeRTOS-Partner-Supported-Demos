@@ -166,13 +166,14 @@ UART_polled_tx
          */
         do
         {
+#if 1
             /* Wait until TX FIFO is empty. */
             do
             {
                 status = this_uart->hw_reg->LSR;
                // this_uart->status |= status;
             }while (0u == (status & UART_THRE));
-
+#endif
 
             /* Check if TX FIFO is empty. */
            // if (status & UART_THRE)
@@ -229,13 +230,14 @@ UART_polled_tx_string
          */
         while (0u != data_byte)
         {
+#if 1
             /* Wait until TX FIFO is empty. */
             do
             {
                 status = this_uart->hw_reg->LSR;
                // this_uart->status |= status;
             }while (0u == (status & UART_THRE));
-
+#endif
 		
             /* Send bytes from the input buffer until the TX FIFO is full
              * or we reach the NULL terminator byte.
@@ -763,6 +765,8 @@ default_tx_handler
 
     //ASSERT(( (uint8_t*)0 ) != this_uart->tx_buffer);
     //ASSERT(0u < this_uart->tx_buff_size);
+
+	//*(volatile uint8_t *)0x10000000 = 0x63;
 
     if ((((uint8_t*)0 ) != this_uart->tx_buffer) &&
        (0u < this_uart->tx_buff_size))

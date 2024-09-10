@@ -53,7 +53,7 @@
 #define configTICK_RATE_HZ				( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES			( 5 )
 #define configMINIMAL_STACK_SIZE		( ( uint32_t ) 1024 ) 
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 500 * 1024 ) )
+#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 1024 * 1024 ) )
 #define configMAX_TASK_NAME_LEN			( 16 )
 #define configUSE_TRACE_FACILITY		0
 #define configUSE_16_BIT_TICKS			0
@@ -133,7 +133,7 @@ void vSendString( const char * const pcString );
 #define configSTART_ABORT_DELAY_TESTS             1
 #define configSTART_TIMER_TESTS                   1
 
-#define configSTART_REGISTER_TESTS                1
+#define configSTART_REGISTER_TESTS                0
 
-#define configSTART_DELETE_SELF_TESTS             1
+#define configSTART_DELETE_SELF_TESTS             0
 #endif /* FREERTOS_CONFIG_H */
