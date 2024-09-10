@@ -1,29 +1,3 @@
-/*
- * FreeRTOS V202212.01
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://www.FreeRTOS.org
- * https://github.com/FreeRTOS
- *
- */
-
 /* FreeRTOS kernel includes. */
 #include <FreeRTOS.h>
 #include "TestRunner.h"
@@ -120,45 +94,57 @@ void flash_led()
     }
 }
 
-
 extern void freertos_risc_v_trap_handler( void );
 
 #define mainVECTOR_MODE_DIRECT 1
-int main( void )
-{
-	prvSetupHardware();
-    flash_led();
-	// trap handler initialization
-    #if( mainVECTOR_MODE_DIRECT == 1 )
-	{
-		__asm__ volatile( "csrw mtvec, %0" :: "r"( freertos_risc_v_trap_handler ) );
-	}
-	#else
-	{
-		__asm__ volatile( "csrw mtvec, %0" :: "r"( ( uintptr_t )freertos_vector_table | 0x1 ) );
-	}
-	#endif
 
-	/* The mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting is described at the top
-	of this file. */
-	#if( mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1 )
+int
+main(void)
+{
+	char *s[128];
+	int i;
+
+	prvSetupHardware();
+
+	i = 0;
+
+	while (1) {
+		sprintf(s, "hello %d\r\n", i++);
+		UART_polled_tx_string(gp_my_uart, s);
+	}
+
+	flash_led();
+
+	// trap handler initialization
+#if (mainVECTOR_MODE_DIRECT == 1)
+	{
+		__asm__ volatile( "csrw mtvec, %0"
+			:: "r"( freertos_risc_v_trap_handler));
+	}
+#else
+	{
+		__asm__ volatile( "csrw mtvec, %0"
+			:: "r"((uintptr_t)freertos_vector_table | 0x1));
+	}
+#endif
+
+	/* The mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting is described at the top of this file. */
+
+#if (mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1)
 	{
 		main_blinky();
 	}
-	#else
+#else
 	{
         // main_full : TestRunner.c
         vStartTests();
 	}
-	#endif
-    return 0;
+#endif
+	return 0;
 }
 /*-----------------------------------------------------------*/
 
-
-
-
-void vApplicationMallocFailedHook( void )
+void vApplicationMallocFailedHook(void)
 {
 	/* vApplicationMallocFailedHook() will only be called if
 	configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h.  It is a hook
@@ -206,15 +192,16 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 
 void vAssertCalled( void )
 {
-    uint8_t s_debug[16] = "vassert called\r\n";
-    portENTER_CRITICAL();
-    UART_polled_tx_string(gp_my_uart, s_debug);
-    portEXIT_CRITICAL();
-    volatile uint32_t ulSetTo1ToExitFunction = 0;
+	uint8_t s_debug[16] = "vassert called\r\n";
 
-    taskDISABLE_INTERRUPTS();
-	while( ulSetTo1ToExitFunction != 1 )
-	{
-		__asm volatile( "NOP" );
-	}
+	portENTER_CRITICAL();
+	UART_polled_tx_string(gp_my_uart, s_debug);
+	portEXIT_CRITICAL();
+
+	volatile uint32_t ulSetTo1ToExitFunction = 0;
+
+	taskDISABLE_INTERRUPTS();
+
+	while (ulSetTo1ToExitFunction != 1)
+		__asm volatile("NOP");
 }
