@@ -50,6 +50,39 @@ uint8_t s_uart[17] = "init_uart SHIP\r\n";
 #define testrunnerTIMER_TEST_PERIOD                             ( 50 )
 
 /*-----------------------------------------------------------*/
+
+int
+uart_putc(int c)
+{
+	int status;
+
+	/* Wait until TX FIFO is empty. */
+	do {
+		status = *(uint32_t *)(FPGA_UART_0_BASE + 0x14); //gp_my_uart->hw_reg->LSR;
+	}
+	while (0u == (status & UART_THRE));
+
+	//gp_my_uart->hw_reg->THR = c;
+	*(uint32_t *)FPGA_UART_0_BASE = c;
+
+	do {
+		//status = gp_my_uart->hw_reg->LSR;
+		status = *(uint32_t *)(FPGA_UART_0_BASE + 0x14); //gp_my_uart->hw_reg->LSR;
+	}
+	while (0u == (status & UART_THRE));
+}
+
+int
+_write (int file, char * ptr, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++)
+		uart_putc(ptr[i]);
+
+	return (len);
+}
+
 void LEDInit( void )
 {
     LEDS = LED_STATE;
@@ -110,6 +143,13 @@ void flash_led()
 extern void freertos_risc_v_trap_handler( void );
 
 void
+my_printf(void *s)
+{
+
+	UART_polled_tx_string(gp_my_uart, s);
+}
+
+void
 test_task(void *arg)
 {
 	TickType_t xDelay;
@@ -121,9 +161,23 @@ test_task(void *arg)
 
 	xDelay = 500 / portTICK_PERIOD_MS;
 
+	printf("startup1\r\n");
+	printf("startup2\r\n");
+	printf("startup %d\r\n", xDelay);
+
+	sprintf(s, "%s\r\n", __func__);
+	UART_polled_tx_string(gp_my_uart, s);
+
+	xNetworkInterfaceInitialise();
+	sprintf(s, "%s: ok\r\n", __func__);
+	UART_polled_tx_string(gp_my_uart, s);
+
 	while (1) {
+		printf("working %d\r\n", i++);
+#if 0
 		sprintf(s, "hello from task %d\r\n", i++);
 		UART_polled_tx_string(gp_my_uart, s);
+#endif
 		vTaskDelay(xDelay);
 	}
 }
@@ -150,7 +204,7 @@ main(void)
 	}
 #endif
 
-	xResult = xTaskCreate(test_task, "test", configMINIMAL_STACK_SIZE * 2U,
+	xResult = xTaskCreate(test_task, "test", configMINIMAL_STACK_SIZE * 8U,
 	    NULL, 1 /* prio */, NULL );
 	if( xResult == pdPASS )
 	{
