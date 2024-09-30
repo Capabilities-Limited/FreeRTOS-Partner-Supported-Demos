@@ -131,6 +131,71 @@ FREERTOS_TCP_SRC = \
 
 AAA= $(FREERTOS_TCP_STUBS_SOURCE_DIR)/freertos_api.c
 
+FREERTOS_GLUE_SRC = \
+	NetworkInterface/RISC-V/NetworkInterface.c \
+	NetworkInterface/RISC-V/riscv_hal_eth.c
+
+APP_SRC = \
+	bsp/bsp.c \
+	bsp/plic_driver.c \
+	bsp/syscalls.c \
+	bsp/uart.c \
+	bsp/iic.c \
+	bsp/gpio.c \
+	bsp/spi.c \
+	bsp/xilinx/uartns550/xuartns550.c \
+	bsp/xilinx/uartns550/xuartns550_g.c \
+	bsp/xilinx/uartns550/xuartns550_sinit.c \
+	bsp/xilinx/uartns550/xuartns550_selftest.c \
+	bsp/xilinx/uartns550/xuartns550_stats.c \
+	bsp/xilinx/uartns550/xuartns550_options.c \
+	bsp/xilinx/uartns550/xuartns550_intr.c \
+	bsp/xilinx/uartns550/xuartns550_l.c \
+	bsp/xilinx/axidma/xaxidma_bd.c \
+	bsp/xilinx/axidma/xaxidma_bdring.c \
+	bsp/xilinx/axidma/xaxidma.c \
+	bsp/xilinx/axidma/xaxidma_selftest.c \
+	bsp/xilinx/axidma/xaxidma_g.c \
+	bsp/xilinx/axidma/xaxidma_sinit.c \
+	bsp/xilinx/axiethernet/xaxiethernet.c \
+	bsp/xilinx/axiethernet/xaxiethernet_control.c \
+	bsp/xilinx/axiethernet/xaxiethernet_g.c \
+	bsp/xilinx/axiethernet/xaxiethernet_sinit.c \
+	bsp/xilinx/iic/xiic.c \
+	bsp/xilinx/iic/xiic_g.c \
+	bsp/xilinx/iic/xiic_l.c \
+	bsp/xilinx/iic/xiic_sinit.c \
+	bsp/xilinx/iic/xiic_selftest.c \
+	bsp/xilinx/iic/xiic_master.c \
+	bsp/xilinx/iic/xiic_intr.c \
+	bsp/xilinx/iic/xiic_stats.c \
+	bsp/xilinx/spi/xspi.c \
+	bsp/xilinx/spi/xspi_g.c \
+	bsp/xilinx/spi/xspi_sinit.c \
+	bsp/xilinx/spi/xspi_selftest.c \
+	bsp/xilinx/spi/xspi_options.c \
+	bsp/xilinx/gpio/xgpio.c \
+	bsp/xilinx/gpio/xgpio_extra.c \
+	bsp/xilinx/gpio/xgpio_g.c \
+	bsp/xilinx/gpio/xgpio_intr.c \
+	bsp/xilinx/gpio/xgpio_selftest.c \
+	bsp/xilinx/gpio/xgpio_sinit.c \
+	bsp/xilinx/common/xbasic_types.c \
+	bsp/xilinx/common/xil_io.c \
+	bsp/xilinx/common/xil_assert.c
+
+INCLUDES += \
+	-I. \
+	-I./bsp \
+	-I./bsp/xilinx \
+	-I./bsp/xilinx/common \
+	-I./bsp/xilinx/axidma \
+	-I./bsp/xilinx/axiethernet \
+	-I./bsp/xilinx/uartns550 \
+	-I./bsp/xilinx/iic \
+	-I./bsp/xilinx/spi \
+	-I./bsp/xilinx/gpio
+
 DEMO_SRC =  \
 	$(DEMO_SOURCE_DIR)/blocktim.c \
 	$(DEMO_SOURCE_DIR)/countsem.c \
@@ -158,7 +223,7 @@ ASM_SRC = start.S \
 		  RegTest.S \
 	      $(FREERTOS_SOURCE_DIR)/portable/GCC/RISC-V/portASM.S 
 
-APP_SRC = \
+APP_SRC += \
 	main.c \
 	TestRunner.c \
 	main_blinky.c \
@@ -169,12 +234,14 @@ APP_SRC = \
 
 OBJS = $(FREERTOS_SRC:%.c=$(BUILD_DIR)/%.o) \
 	$(FREERTOS_TCP_SRC:%.c=$(BUILD_DIR)/%.o) \
+	$(FREERTOS_GLUE_SRC:%.c=$(BUILD_DIR)/%.o) \
 	   $(DEMO_SRC:%.c=$(BUILD_DIR)/%.o) \
 	   $(ASM_SRC:%.S=$(BUILD_DIR)/%.o) \
 	   $(APP_SRC:%.c=$(BUILD_DIR)/%.o)
 
 DEPS = $(FREERTOS_SRC:%.c=$(BUILD_DIR)/%.d) \
 	$(FREERTOS_TCP_SRC:%.c=$(BUILD_DIR)/%.d) \
+	$(FREERTOS_GLUE_SRC:%.c=$(BUILD_DIR)/%.d) \
 		$(DEMO_SRC:%.c=$(BUILD_DIR)/%.d) \
 		$(ASM_SRC:%.S=$(BUILD_DIR)/%.d) \
 		$(APP_SRC:%.c=$(BUILD_DIR)/%.d)

@@ -136,4 +136,13 @@ void vSendString( const char * const pcString );
 #define configSTART_REGISTER_TESTS                0
 
 #define configSTART_DELETE_SELF_TESTS             0
+
+#define configPERIPH_CLOCK_HZ configCPU_CLOCK_HZ
+#define configMAC_ADDR0                      0x00
+#define configMAC_ADDR1                      0x11
+#define configMAC_ADDR2                      0x22
+#define configMAC_ADDR3                      0x33
+#define configMAC_ADDR4                      0x44
+#define configMAC_ADDR5                      0x32
+
 #endif /* FREERTOS_CONFIG_H */

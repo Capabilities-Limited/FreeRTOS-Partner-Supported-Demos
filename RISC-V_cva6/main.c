@@ -36,6 +36,19 @@ static int LED_STATE = 0xf;
 
 uint8_t s_uart[17] = "init_uart SHIP\r\n";
 
+#define testrunnerCHECK_TASK_PRIORITY			( configMAX_PRIORITIES - 2 )
+#define testrunnerQUEUE_POLL_PRIORITY			( tskIDLE_PRIORITY + 1 )
+#define testrunnerSEM_TEST_PRIORITY				( tskIDLE_PRIORITY + 1 )
+#define testrunnerBLOCK_Q_PRIORITY				( tskIDLE_PRIORITY + 2 )
+#define testrunnerCREATOR_TASK_PRIORITY			( tskIDLE_PRIORITY + 3 )
+#define testrunnerFLASH_TASK_PRIORITY			( tskIDLE_PRIORITY + 1 )
+#define testrunnerINTEGER_TASK_PRIORITY			( tskIDLE_PRIORITY )
+#define testrunnerGEN_QUEUE_TASK_PRIORITY		( tskIDLE_PRIORITY )
+#define testrunnerFLOP_TASK_PRIORITY			( tskIDLE_PRIORITY )
+#define testrunnerQUEUE_OVERWRITE_PRIORITY		( tskIDLE_PRIORITY )
+#define testrunnerREGISTER_TEST_PRIORITY		( tskIDLE_PRIORITY )
+#define testrunnerTIMER_TEST_PERIOD                             ( 50 )
+
 /*-----------------------------------------------------------*/
 void LEDInit( void )
 {
@@ -96,37 +109,210 @@ void flash_led()
 
 extern void freertos_risc_v_trap_handler( void );
 
+void
+test_task(void *arg)
+{
+	TickType_t xDelay;
+	char *s[128];
+
+	int i;
+
+	i = 0;
+
+	xDelay = 500 / portTICK_PERIOD_MS;
+
+	while (1) {
+		sprintf(s, "hello from task %d\r\n", i++);
+		UART_polled_tx_string(gp_my_uart, s);
+		vTaskDelay(xDelay);
+	}
+}
+
 #define mainVECTOR_MODE_DIRECT 1
 
 int
 main(void)
 {
-	char *s[128];
-	int i;
+	BaseType_t xResult;
 
 	prvSetupHardware();
-
-	i = 0;
-
-	while (1) {
-		sprintf(s, "hello %d\r\n", i++);
-		UART_polled_tx_string(gp_my_uart, s);
-	}
-
-	flash_led();
 
 	// trap handler initialization
 #if (mainVECTOR_MODE_DIRECT == 1)
 	{
-		__asm__ volatile( "csrw mtvec, %0"
-			:: "r"( freertos_risc_v_trap_handler));
+		__asm__ volatile("csrw mtvec, %0"
+			:: "r"(freertos_risc_v_trap_handler));
 	}
 #else
 	{
-		__asm__ volatile( "csrw mtvec, %0"
+		__asm__ volatile("csrw mtvec, %0"
 			:: "r"((uintptr_t)freertos_vector_table | 0x1));
 	}
 #endif
+
+	xResult = xTaskCreate(test_task, "test", configMINIMAL_STACK_SIZE * 2U,
+	    NULL, 1 /* prio */, NULL );
+	if( xResult == pdPASS )
+	{
+		#if( configSTART_TASK_NOTIFY_TESTS == 1 )
+		{
+			vStartTaskNotifyTask();
+		}
+		#endif /* configSTART_TASK_NOTIFY_TESTS */
+
+		#if( configSTART_TASK_NOTIFY_ARRAY_TESTS == 1 )
+		{
+			vStartTaskNotifyArrayTask();
+		}
+		#endif /* configSTART_TASK_NOTIFY_ARRAY_TESTS */
+
+		#if( configSTART_BLOCKING_QUEUE_TESTS == 1 )
+		{
+			vStartBlockingQueueTasks( testrunnerBLOCK_Q_PRIORITY );
+		}
+		#endif /* configSTART_BLOCKING_QUEUE_TESTS */
+
+		#if( configSTART_SEMAPHORE_TESTS == 1 )
+		{
+			vStartSemaphoreTasks( testrunnerSEM_TEST_PRIORITY );
+		}
+		#endif /* configSTART_SEMAPHORE_TESTS */
+
+		#if( configSTART_POLLED_QUEUE_TESTS == 1 )
+		{
+			vStartPolledQueueTasks( testrunnerQUEUE_POLL_PRIORITY );
+		}
+		#endif /* configSTART_POLLED_QUEUE_TESTS */
+
+		#if( configSTART_INTEGER_MATH_TESTS == 1 )
+		{
+			vStartIntegerMathTasks( testrunnerINTEGER_TASK_PRIORITY );
+		}
+		#endif /* configSTART_INTEGER_MATH_TESTS */
+
+		#if( configSTART_GENERIC_QUEUE_TESTS == 1 )
+		{
+			vStartGenericQueueTasks( testrunnerGEN_QUEUE_TASK_PRIORITY );
+		}
+		#endif /* configSTART_GENERIC_QUEUE_TESTS */
+
+		#if( configSTART_PEEK_QUEUE_TESTS == 1 )
+		{
+			vStartQueuePeekTasks();
+		}
+		#endif /* configSTART_PEEK_QUEUE_TESTS */
+
+		#if( configSTART_MATH_TESTS == 1 )
+		{
+			vStartMathTasks( testrunnerFLOP_TASK_PRIORITY );
+		}
+		#endif /* configSTART_MATH_TESTS */
+
+		#if( configSTART_RECURSIVE_MUTEX_TESTS == 1 )
+		{
+			vStartRecursiveMutexTasks();
+		}
+		#endif /* configSTART_RECURSIVE_MUTEX_TESTS */
+
+		#if( configSTART_COUNTING_SEMAPHORE_TESTS == 1 )
+		{
+			vStartCountingSemaphoreTasks();
+		}
+		#endif /* configSTART_COUNTING_SEMAPHORE_TESTS */
+
+		#if( configSTART_QUEUE_SET_TESTS == 1 )
+		{
+			vStartQueueSetTasks();
+		}
+		#endif /* configSTART_QUEUE_SET_TESTS */
+
+		#if( configSTART_QUEUE_OVERWRITE_TESTS == 1 )
+		{
+			vStartQueueOverwriteTask( testrunnerQUEUE_OVERWRITE_PRIORITY );
+		}
+		#endif /* configSTART_QUEUE_OVERWRITE_TESTS */
+
+		#if( configSTART_EVENT_GROUP_TESTS == 1 )
+		{
+			vStartEventGroupTasks();
+		}
+		#endif /* configSTART_EVENT_GROUP_TESTS */
+
+		#if( configSTART_INTERRUPT_SEMAPHORE_TESTS == 1 )
+		{
+			vStartInterruptSemaphoreTasks();
+		}
+		#endif /* configSTART_INTERRUPT_SEMAPHORE_TESTS */
+
+		#if( configSTART_QUEUE_SET_POLLING_TESTS == 1 )
+		{
+			vStartQueueSetPollingTask();
+		}
+		#endif /* configSTART_QUEUE_SET_POLLING_TESTS */
+
+		#if( configSTART_BLOCK_TIME_TESTS == 1 )
+		{
+			vCreateBlockTimeTasks();
+		}
+		#endif /* configSTART_BLOCK_TIME_TESTS */
+
+		#if( configSTART_ABORT_DELAY_TESTS == 1 )
+		{
+			vCreateAbortDelayTasks();
+		}
+		#endif /* configSTART_ABORT_DELAY_TESTS */
+
+		#if( configSTART_MESSAGE_BUFFER_TESTS == 1 )
+		{
+			vStartMessageBufferTasks( configMINIMAL_STACK_SIZE );
+		}
+		#endif /* configSTART_MESSAGE_BUFFER_TESTS */
+
+		#if(configSTART_STREAM_BUFFER_TESTS  == 1 )
+		{
+			vStartStreamBufferTasks();
+		}
+		#endif /* configSTART_STREAM_BUFFER_TESTS */
+
+		#if( configSTART_STREAM_BUFFER_INTERRUPT_TESTS == 1 )
+		{
+			vStartStreamBufferInterruptDemo();
+		}
+		#endif /* configSTART_STREAM_BUFFER_INTERRUPT_TESTS */
+
+		#if( ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) )
+		{
+			/* Don't expect these tasks to pass when preemption is not used. */
+			vStartTimerDemoTask( testrunnerTIMER_TEST_PERIOD );
+		}
+		#endif /* ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) */
+
+		#if( configSTART_INTERRUPT_QUEUE_TESTS == 1 )
+		{
+			vStartInterruptQueueTasks();
+		}
+		#endif /* configSTART_INTERRUPT_QUEUE_TESTS */
+
+		#if( configSTART_REGISTER_TESTS == 1 )
+		{
+			vStartRegisterTasks( testrunnerREGISTER_TEST_PRIORITY );
+		}
+		#endif /* configSTART_REGISTER_TESTS */
+
+		#if( configSTART_DELETE_SELF_TESTS == 1 )
+		{
+			/* The suicide tasks must be created last as they need to know how many
+			* tasks were running prior to their creation.  This then allows them to
+			* ascertain whether or not the correct/expected number of tasks are
+			* running at any given time. */
+			vCreateSuicidalTasks( testrunnerCREATOR_TASK_PRIORITY );
+		}
+		#endif /* configSTART_DELETE_SELF_TESTS */
+	}
+
+	vTaskStartScheduler();
+
+	flash_led();
 
 	/* The mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting is described at the top of this file. */
 
