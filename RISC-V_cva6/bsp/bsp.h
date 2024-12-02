@@ -20,7 +20,7 @@
 #define RISCV_P1_BSP_H
 
 #include "stdint.h"
-#include "plic_driver.h"
+//#include "plic_driver.h"
 
 #ifdef FETT_APPS
 #include "fettUserConfig.h"
@@ -54,7 +54,7 @@
 #define PLIC_PRIORITY_IIC0 0x3
 #define PLIC_PRIORITY_SPI1 0x2
 
-extern plic_instance_t Plic;
+//extern plic_instance_t Plic;
 
 #if __riscv_xlen == 64
 #define MCAUSE_EXTERNAL_INTERRUPT 0x800000000000000b

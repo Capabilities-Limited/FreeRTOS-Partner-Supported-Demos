@@ -135,12 +135,13 @@ FREERTOS_GLUE_SRC = \
 	NetworkInterface/RISC-V/NetworkInterface.c \
 	NetworkInterface/RISC-V/riscv_hal_eth.c
 
+AAA = bsp/plic_driver.c\
+	bsp/iic.c \
+
 APP_SRC = \
 	bsp/bsp.c \
-	bsp/plic_driver.c \
 	bsp/syscalls.c \
 	bsp/uart.c \
-	bsp/iic.c \
 	bsp/gpio.c \
 	bsp/spi.c \
 	bsp/xilinx/uartns550/xuartns550.c \

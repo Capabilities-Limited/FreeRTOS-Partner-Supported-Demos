@@ -3,21 +3,27 @@
 #include "iic.h"
 #include "gpio.h"
 #include "spi.h"
-#include "plic_driver.h"
+//#include "plic_driver.h"
+
+#include "../encoding.h"
 
 // to communicate with the debugger in spike
 volatile uint64_t tohost __attribute__((aligned(64)));
 volatile uint64_t fromhost __attribute__((aligned(64)));
 
-plic_instance_t Plic;
+//plic_instance_t Plic;
 
 /**
  *  Prepare haredware to run the demo.
  */
-void prvSetupHardware(void)
+void prvSetupHardware1(void)
 {
+#if 0
     // Resets PLIC, threshold 0, nothing enabled
     PLIC_init(&Plic, PLIC_BASE_ADDR, PLIC_NUM_SOURCES, PLIC_NUM_PRIORITIES);
+
+    /* Enable machine external interrupts. */
+    set_csr(mie, MIP_MEIP);
 
 // Set priorities & initialize peripherals
 #if BSP_USE_UART0
@@ -55,6 +61,7 @@ void prvSetupHardware(void)
 #if BSP_USE_GPIO
     gpio_init();
 #endif
+#endif
 }
 
 /**
@@ -65,6 +72,7 @@ void external_interrupt_handler(HANDLER_DATATYPE cause)
 {
     configASSERT(cause == MCAUSE_EXTERNAL_INTERRUPT);
 
+#if 0
     plic_source source_id = PLIC_claim_interrupt(&Plic);
 
     if ((source_id >= 1) && (source_id < PLIC_NUM_INTERRUPTS))
@@ -74,6 +82,7 @@ void external_interrupt_handler(HANDLER_DATATYPE cause)
 
     // clear interrupt
     PLIC_complete_interrupt(&Plic, source_id);
+#endif
 }
 
 #ifdef BIN_SOURCE_LMCO

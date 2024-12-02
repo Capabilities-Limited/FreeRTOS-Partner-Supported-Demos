@@ -24,6 +24,8 @@ void PLIC_init(
     uint32_t num_priorities)
 {
 
+	return;
+
     this_plic->base_addr = base_addr;
     this_plic->num_sources = num_sources;
     this_plic->num_priorities = num_priorities;

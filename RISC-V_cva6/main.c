@@ -6,6 +6,14 @@
 static uart_instance_t * const gp_my_uart = &g_uart_0;
 static int g_stdio_uart_init_done = 0;
 
+#include "plic/plic.h"
+
+/* ========================= FreeRTOS+TCP includes ========================== */
+#include "FreeRTOS_IP.h"
+#include "FreeRTOS_IP_Private.h"
+#include "NetworkBufferManagement.h"
+#include "FreeRTOS_Stream_Buffer.h"
+
 #define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY	0
 
 /*-----------------------------------------------------------*/
@@ -50,6 +58,21 @@ uint8_t s_uart[17] = "init_uart SHIP\r\n";
 #define testrunnerTIMER_TEST_PERIOD                             ( 50 )
 
 /*-----------------------------------------------------------*/
+
+BaseType_t xRet;
+BaseType_t xEndPointCount = 0;
+const uint8_t ucIPAddress[ 4 ] = { 10,2,0,150 };
+const uint8_t ulIPAddress[ 4 ] = { 10,2,0,1 };
+const uint8_t ucNetMask[ 4 ] =  { 255, 255, 255, 0 };
+const uint8_t ucGatewayAddress[ 4 ] = { 10,2,0,1 };
+const uint8_t ucDNSServerAddress[ 4 ] = { 8,8,8,8 };
+const uint8_t ucMACAddress[ 6 ] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 };
+static NetworkInterface_t xInterfaces[1];
+static NetworkEndPoint_t xEndPoints[4];
+
+extern NetworkInterface_t * pxAxi_FillInterfaceDescriptor(BaseType_t xEMACIndex, NetworkInterface_t * pxInterface);
+
+/* ------------- */
 
 int
 uart_putc(int c)
@@ -99,10 +122,13 @@ static void prvSetupHardware( void )
     g_stdio_uart_init_done = 1;
     UART_polled_tx_string(gp_my_uart, s_uart);
 
+  //prvSetupHardware1();
 
-	//PLIC_init();
-	//UART_init( &g_uart, COREUARTAPB0_BASE_ADDR, BAUD_VALUE_115200, ( DATA_8_BITS | NO_PARITY ) );
+   PLIC_init();
+
+   //UART_init( &g_uart, COREUARTAPB0_BASE_ADDR, BAUD_VALUE_115200, ( DATA_8_BITS | NO_PARITY ) );
 }
+
 /*-----------------------------------------------------------*/
 
 
@@ -168,12 +194,56 @@ test_task(void *arg)
 	sprintf(s, "%s\r\n", __func__);
 	UART_polled_tx_string(gp_my_uart, s);
 
-	xNetworkInterfaceInitialise();
+	//xNetworkInterfaceInitialise();
 	sprintf(s, "%s: ok\r\n", __func__);
+
+#if 1
+	/* Initialize the interface descriptor. */
+	pxAxi_FillInterfaceDescriptor(0, &(xInterfaces[0]));
+	/* === End-point 0 === */
+	FreeRTOS_FillEndPoint( &(xInterfaces[0]),
+                               &(xEndPoints[xEndPointCount]),
+                               ucIPAddress,
+                               ucNetMask,
+                               ucGatewayAddress,
+                               ucDNSServerAddress,
+                               ucMACAddress);
+        xEndPoints[xEndPointCount].bits.bWantDHCP = pdTRUE;
+        xEndPointCount += 1;
+
+	BaseType_t error;
+	error = FreeRTOS_IPInit_Multi();
+	if (error == pdTRUE)
+		printf("%s: network initialized\r\n", __func__);
+	else {
+		printf("%s: failed to initialize network\r\n", __func__);
+		while (1);
+	}
+#else
+	BaseType_t err;
+	err = FreeRTOS_IPInit(ucIPAddress,
+			      ucNetMask,
+			      ucGatewayAddress,
+			      ucDNSServerAddress,
+			      ucMACAddress);
+#endif
+
 	UART_polled_tx_string(gp_my_uart, s);
 
 	while (1) {
+
 		printf("working %d\r\n", i++);
+
+#if 0
+		BaseType_t err;
+		err = FreeRTOS_SendPingRequest(ulIPAddress, 64,
+		    100 / portTICK_PERIOD_MS );
+		if (err == pdFAIL)
+			printf("failed to send ping\r\n");
+		else
+			printf("ping sent %d\r\n", err);
+#endif
+
 #if 0
 		sprintf(s, "hello from task %d\r\n", i++);
 		UART_polled_tx_string(gp_my_uart, s);
@@ -208,6 +278,8 @@ main(void)
 	    NULL, 1 /* prio */, NULL );
 	if( xResult == pdPASS )
 	{
+
+#if 1
 		#if( configSTART_TASK_NOTIFY_TESTS == 1 )
 		{
 			vStartTaskNotifyTask();
@@ -334,12 +406,14 @@ main(void)
 		}
 		#endif /* configSTART_STREAM_BUFFER_INTERRUPT_TESTS */
 
+#if 1
 		#if( ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) )
 		{
 			/* Don't expect these tasks to pass when preemption is not used. */
 			vStartTimerDemoTask( testrunnerTIMER_TEST_PERIOD );
 		}
 		#endif /* ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) */
+#endif
 
 		#if( configSTART_INTERRUPT_QUEUE_TESTS == 1 )
 		{
@@ -362,6 +436,7 @@ main(void)
 			vCreateSuicidalTasks( testrunnerCREATOR_TASK_PRIORITY );
 		}
 		#endif /* configSTART_DELETE_SELF_TESTS */
+#endif
 	}
 
 	vTaskStartScheduler();
@@ -444,4 +519,47 @@ void vAssertCalled( void )
 
 	while (ulSetTo1ToExitFunction != 1)
 		__asm volatile("NOP");
+}
+
+void
+freertos_risc_v_application_interrupt_handler(uint32_t ulMcause)
+{
+	uint32_t irq;
+
+	do {
+		irq = PLIC_ClaimIRQ();
+		if (irq == 0)
+			break;
+
+		printf("%s: cause %x intr %d\r\n", __func__, ulMcause, irq);
+
+		if (irq == 8) {
+			//portENTER_CRITICAL();
+			xNetworkInterfaceInput();
+			//portEXIT_CRITICAL();
+		}
+		PLIC_CompleteIRQ(irq);
+	} while (1);
+}
+
+#define BUFFER_SIZE (ipTOTAL_ETHERNET_FRAME_SIZE + ipBUFFER_PADDING)
+#define BUFFER_SIZE_ROUNDED_UP ((BUFFER_SIZE + 7) & ~0x07UL)
+static uint8_t ucBuffers[ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS][BUFFER_SIZE_ROUNDED_UP] __aligned(32);
+void
+vNetworkInterfaceAllocateRAMToBuffers(NetworkBufferDescriptor_t pxNetworkBuffers[ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS])
+{
+	BaseType_t x;
+
+	for (x = 0; x < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; x++) {
+		pxNetworkBuffers[x].pucEthernetBuffer = &(ucBuffers[x][ipBUFFER_PADDING]);
+		*((uint32_t *)&ucBuffers[x][0]) = (uint32_t)&(pxNetworkBuffers[x]);
+	}
+}
+
+void vApplicationPingReplyHook( ePingReplyStatus_t eStatus,
+                                uint16_t usIdentifier )
+{
+
+	printf("%s\r\n", __func__);
+    /* Provide a stub for this function. */
 }

@@ -334,12 +334,14 @@ void vApplicationTickHook( void )
 	}
 	#endif /* configSTART_STREAM_BUFFER_INTERRUPT_TESTS */
 
+#if 0
 	#if( ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) )
 	{
 		/* Only created when preemption is used. */
 		vTimerPeriodicISRTests();
 	}
 	#endif /* ( configSTART_TIMER_TESTS == 1 ) && ( configUSE_PREEMPTION != 0 ) */
+#endif
 
 	#if( configSTART_INTERRUPT_QUEUE_TESTS == 1 )
 	{

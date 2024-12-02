@@ -4,7 +4,7 @@
 
 #include "xaxiethernet.h"
 #include "xaxidma.h"
-#include "plic_driver.h"
+//#include "plic_driver.h"
 #include "bsp.h"
 
 /* Driver instances*/
@@ -36,6 +36,7 @@ void RxIntrHandler(XAxiDma_BdRing *RxRingPtr);
 void RxCallBack(XAxiDma_BdRing *RxRingPtr);
 void AxiEthernetErrorHandler(XAxiEthernet *AxiEthernet);
 
+#if 0
 int AxiEthernetSetupIntrSystem(plic_instance_t *IntcInstancePtr,
 				XAxiEthernet *AxiEthernetInstancePtr,
 				XAxiDma *DmaInstancePtr,
@@ -45,6 +46,7 @@ int AxiEthernetSetupIntrSystem(plic_instance_t *IntcInstancePtr,
 void AxiEthernetDisableIntrSystem(plic_instance_t *IntcInstancePtr,
 				   u16 AxiEthernetIntrId,
 				   u16 DmaRxIntrId, u16 DmaTxIntrId);
+#endif
 
 int PhySetup(XAxiEthernet *AxiEthernetInstancePtr, u16 AxiEthernetDeviceId);
 void PhyReset(XAxiEthernet *AxiEthernetInstancePtr);

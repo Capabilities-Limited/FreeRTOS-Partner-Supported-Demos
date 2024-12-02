@@ -978,6 +978,7 @@ int XAxiEthernet_SetOptions(XAxiEthernet *InstancePtr, u32 Options)
 							XAE_RCW1_OFFSET));
 
 	/* Turn on promiscuous frame filtering (all frames are received ) */
+	//DepOptions |= XAE_PROMISC_OPTION;
 	if (DepOptions & XAE_PROMISC_OPTION) {
 		xaxi_debug_printf(
 				"setOptions: enabling promiscuous mode\r\n");
@@ -1752,6 +1753,10 @@ void XAxiEthernet_PhyRead(XAxiEthernet *InstancePtr, u32 PhyAddress,
 		panic("ddd");
 	}
 
+	uint32_t mcr;
+	mcr = XAxiEthernet_ReadReg(InstancePtr->Config.BaseAddress, XAE_MDIO_MCR_OFFSET);
+	printf("MCR %x\n", mcr);
+
 	MdioCtrlReg =   ((PhyAddress << XAE_MDIO_MCR_PHYAD_SHIFT) &
 			XAE_MDIO_MCR_PHYAD_MASK) |
 			((RegisterNum << XAE_MDIO_MCR_REGAD_SHIFT)
@@ -1782,6 +1787,9 @@ void XAxiEthernet_PhyRead(XAxiEthernet *InstancePtr, u32 PhyAddress,
 		Xil_AssertVoidAlways();
 		panic("aaa");
 	}
+
+	mcr = XAxiEthernet_ReadReg(InstancePtr->Config.BaseAddress, XAE_MDIO_MCR_OFFSET);
+	printf("MCR after command %x\n", mcr);
 
 	/* Read data */
 	*PhyDataPtr = (u16) XAxiEthernet_ReadReg

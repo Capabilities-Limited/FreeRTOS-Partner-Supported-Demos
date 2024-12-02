@@ -173,7 +173,7 @@ static inline void PLIC_init(void)
     PLIC->TARGET[TARGET_OFFSET_HART0_S].PRIORITY_THRESHOLD  = 7U;
     
     /* Enable machine external interrupts. */
-    set_csr(mie, MIP_MEIP);
+   set_csr(mie, MIP_MEIP);
 }
 
 /***************************************************************************//**
@@ -340,7 +340,7 @@ static inline void PLIC_ClearPendingIRQ(void)
     volatile uint32_t int_num  = PLIC_ClaimIRQ();
     volatile int32_t wait_possible_int;
     
-    //printf("interrupt_number = %d\n", int_num);
+    printf("interrupt_number = %d\n", int_num);
 
     while ( int_num != NoInterrupt_IRQHandler)
     {

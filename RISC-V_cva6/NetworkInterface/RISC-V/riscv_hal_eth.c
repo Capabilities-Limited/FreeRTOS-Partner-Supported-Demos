@@ -46,6 +46,8 @@
 /* FreeRTOS+TCP includes. */
 #include "NetworkInterface.h"
 
+#include "plic/plic.h"
+
 // TODO: a bunch of these is not used, clean it
 #define AXIETHERNET_LOOPBACK_SPEED	100	/* 100Mb/s for Mii */
 #define AXIETHERNET_LOOPBACK_SPEED_1G 	1000	/* 1000Mb/s for GMii */
@@ -225,6 +227,8 @@ int AxiEtherentConfigureTIPhy(XAxiEthernet *AxiEthernetInstancePtr, u32 PhyAddr)
 	uint32_t reg;
 
 	int val;
+
+        XAxiEthernet_PhyWrite(AxiEthernetInstancePtr, PhyAddr, MIIM_RTL8211F_PAGE_SELECT, 0);
 
 	XAxiEthernet_PhyRead(AxiEthernetInstancePtr, PhyAddr, 0x2, &reg);
 	printf("PHYID1 %x\n", reg);
@@ -737,7 +741,7 @@ int PhySetup(XAxiEthernet *AxiEthernetInstancePtr, u16 AxiEthernetDeviceId)
 	configASSERT( XAxiEthernet_SetMacAddress(AxiEthernetInstancePtr,
 							AxiEthernetMAC) == 0);
 
-	AxiEtherentConfigureTIPhy(AxiEthernetInstancePtr, XPAR_AXIETHERNET_0_PHYADDR);
+	//AxiEtherentConfigureTIPhy(AxiEthernetInstancePtr, XPAR_AXIETHERNET_0_PHYADDR);
 
 	return XST_SUCCESS;
 }
@@ -916,7 +920,14 @@ void AxiEthernetErrorHandler(XAxiEthernet *AxiEthernet)
 	DeviceErrors++;
 }
 
+void FifoRxIntrHandler(void *arg)
+{
 
+	while (1)
+		printf("%s\n", __func__);
+}
+
+#if 0
 int AxiEthernetSetupIntrSystem(plic_instance_t *IntcInstancePtr,
 				XAxiEthernet *AxiEthernetInstancePtr,
 				XAxiDma *DmaInstancePtr,
@@ -924,36 +935,54 @@ int AxiEthernetSetupIntrSystem(plic_instance_t *IntcInstancePtr,
 				u16 DmaRxIntrId,
 				u16 DmaTxIntrId)
 {
-    xaxi_debug_printf("AxiEthernetSetupIntrSystem\r\n");
+	xaxi_debug_printf("AxiEthernetSetupIntrSystem\r\n");
+
 	XAxiDma_BdRing * TxRingPtr = XAxiDma_GetTxRing(DmaInstancePtr);
 	XAxiDma_BdRing * RxRingPtr = XAxiDma_GetRxRing(DmaInstancePtr);
 	int Status;
 
+	PLIC_EnableIRQ(7);
+#if 0
+	/* FIFO */
+	Status = PLIC_register_interrupt_handler(IntcInstancePtr, 7,
+	    (XInterruptHandler) FifoRxIntrHandler, NULL);
+	if (Status == 0) {
+		printf("Unable to connect ISR to interrupt controller: "
+		    "AxiEthernetIntrId %u\r\n", 7);
+		return XST_FAILURE;
+	}
+	return XST_SUCCESS;
+
+	/* DMA */
+
 	/*
 	 * Initialize the interrupt controller and connect the ISR
 	 */
-	Status = PLIC_register_interrupt_handler(IntcInstancePtr, AxiEthernetIntrId,
-							(XInterruptHandler)
-							AxiEthernetErrorHandler,
-							AxiEthernetInstancePtr);
-    if (Status == 0) {
-        printf("Unable to connect ISR to interrupt controller: AxiEthernetIntrId %u\r\n",AxiEthernetIntrId);
-        return XST_FAILURE;
-    }
+	Status = PLIC_register_interrupt_handler(IntcInstancePtr,
+	    AxiEthernetIntrId, (XInterruptHandler) AxiEthernetErrorHandler,
+	    AxiEthernetInstancePtr);
+
+	if (Status == 0) {
+		printf("Unable to connect ISR to interrupt controller: "
+		    " AxiEthernetIntrId %u\r\n",AxiEthernetIntrId);
+		return XST_FAILURE;
+	}
+
 	Status = PLIC_register_interrupt_handler(IntcInstancePtr, DmaTxIntrId,
-						(XInterruptHandler) TxIntrHandler,
-									TxRingPtr);
-    if (Status == 0) {
-        printf("Unable to connect ISR to interrupt controller: DmaTxIntrId %u\r\n",DmaTxIntrId);
-        return XST_FAILURE;
-    }
+	    (XInterruptHandler) TxIntrHandler, TxRingPtr);
+	if (Status == 0) {
+		printf("Unable to connect ISR to interrupt controller: "
+		    " DmaTxIntrId %u\r\n",DmaTxIntrId);
+		return XST_FAILURE;
+	}
 	Status = PLIC_register_interrupt_handler(IntcInstancePtr, DmaRxIntrId,
-						(XInterruptHandler) RxIntrHandler,
-								RxRingPtr);
-    if (Status == 0) {
-        printf("Unable to connect ISR to interrupt controller: DmaRxIntrId %u\r\n",DmaRxIntrId);
-        return XST_FAILURE;
-    }
+	    (XInterruptHandler) RxIntrHandler, RxRingPtr);
+	if (Status == 0) {
+		printf("Unable to connect ISR to interrupt controller: "
+		    " DmaRxIntrId %u\r\n",DmaRxIntrId);
+		return XST_FAILURE;
+	}
+#endif
 
 	return XST_SUCCESS;
 }
@@ -967,6 +996,7 @@ void AxiEthernetDisableIntrSystem(plic_instance_t *IntcInstancePtr,
 	vTaskSuspend(DmaFreeBDTaskHandle);
 	vTaskSuspend(prvEMACDeferredInterruptHandlerTaskHandle);
 
+#if 0
 	/*
 	 * Disconnect the interrupts for the DMA TX and RX channels
 	 */
@@ -977,8 +1007,10 @@ void AxiEthernetDisableIntrSystem(plic_instance_t *IntcInstancePtr,
 	 * Disconnect and disable the interrupt for the Axi Ethernet device
 	 */
     PLIC_unregister_interrupt_handler(IntcInstancePtr, AxiEthernetIntrId);
+#endif
 
 	/* Now the callbacks won't be called we can delete the tasks */
 	vTaskDelete(DmaFreeBDTaskHandle);
 	vTaskDelete(prvEMACDeferredInterruptHandlerTaskHandle);
 }
+#endif

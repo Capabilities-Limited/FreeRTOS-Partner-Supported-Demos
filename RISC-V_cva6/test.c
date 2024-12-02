@@ -33,10 +33,18 @@ xApplicationGetRandomNumber( uint32_t * pulNumber )
 }
 
 void
+vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
+{
+
+	printf("aaaaaa\n");
+}
+
+struct xNetworkEndPoint * my_pxEndPoint;
+
+void
 vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent,
     struct xNetworkEndPoint * pxEndPoint)
 {
-
 	static BaseType_t xTasksAlreadyCreated = pdFALSE;
 
 	if (eNetworkEvent == eNetworkUp) {
@@ -46,6 +54,7 @@ vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent,
 		}
 		//showEndPoint(pxEndPoint);
 	}
+	my_pxEndPoint = pxEndPoint;
 }
 
 uint32_t
