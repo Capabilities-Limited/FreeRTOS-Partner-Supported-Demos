@@ -1,7 +1,7 @@
 RISCV_XLEN ?= 64
 RISCV_LIB  ?= elf
 
-TARGET=/opt/riscv/bin/riscv${RISCV_XLEN}-unknown-${RISCV_LIB}
+TARGET=riscv${RISCV_XLEN}-unknown-${RISCV_LIB}
 #-----------------------------------------------------------
 GCC		= $(TARGET)-gcc
 OBJCOPY	= $(TARGET)-objcopy
@@ -45,7 +45,7 @@ CFLAGS = \
 	-fno-builtin-printf \
 	-D__gracefulExit \
 	-mcmodel=medany \
-	-march=rv64imad \
+	-march=rv64g \
 	-mabi=lp64d \
 	-I $(FREERTOS_SOURCE_DIR)/portable/GCC/RISC-V/chip_specific_extensions/RV32I_CLINT_no_extensions
 
