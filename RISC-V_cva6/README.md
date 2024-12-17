@@ -91,9 +91,11 @@ Refer: https://github.com/openhwgroup/cva6
 The steps to run the FreeRTOS on CV64A6 FPGA platform are described below.
 
 ## Compile FreeRTOS
->> git clone --recursive https://github.com/Capabilities-Limited/FreeRTOS.git
->> cd FreeRTOS/FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos/RISC-V_cva6
->> make
+```
+git clone --recursive https://github.com/Capabilities-Limited/FreeRTOS.git
+cd FreeRTOS/FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos/RISC-V_cva6
+make
+```
 
 ## Get started with FreeRTOS application on Genesys-2
 When the mcs is loaded, the orange LED `done` lights up.
