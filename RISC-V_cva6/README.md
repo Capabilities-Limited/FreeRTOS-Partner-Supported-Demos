@@ -84,16 +84,16 @@ $ export PATH=$PATH:<path to riscv-openocd>/build/bin
 # FreeRTOS
 
 ## FPGA emulation
-A FPGA platform emulating **CV32A6** (CVA6 in 32b flavor) has been implemented on **Genesys-2** board.
-This platform includes a CV32A6 processor, a JTAG interface to run and debug software applications and a UART interface to display strings on hyperterminal.
+A FPGA platform emulating **CV64A6** (CVA6 in the 64b flavor) has been implemented on **Genesys-2** board.
+This platform includes a CV64A6 processor, a JTAG interface to run and debug software applications and a UART interface to display strings on hyperterminal.
 Refer: https://github.com/openhwgroup/cva6
 
-The steps to run the FreeRTOS on CV32A6 FPGA platform are described below.
+The steps to run the FreeRTOS on CV64A6 FPGA platform are described below.
 
 ## Compile FreeRTOS
-git clone --recursive https://github.com/FreeRTOS/FreeRTOS.git
-cd FreeRTOS/FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos/RISC-V_cva6
-make
+>> git clone --recursive https://github.com/Capabilities-Limited/FreeRTOS.git
+>> cd FreeRTOS/FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos/RISC-V_cva6
+>> make
 
 ## Get started with FreeRTOS application on Genesys-2
 When the mcs is loaded, the orange LED `done` lights up.
